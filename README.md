@@ -85,7 +85,7 @@ Open `http://localhost:3000`.
 |-------|----------|------|
 | `admin@stockapp.com` | `admin123` | admin |
 
-⚠️ **Change the JWT secret and default password before any real deployment.**
+⚠️ **Change the JWT secret and default password before deployment.**
 
 ---
 
