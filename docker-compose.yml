@@ -1,0 +1,31 @@
+version: "3.9"
+
+# Quick local / demo deployment.
+# Production: use PostgreSQL + a secrets manager, terminate TLS at a reverse
+# proxy (nginx/Caddy), and run containers as a non-root user. See DEPLOYMENT.md.
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MARKET_DATA_PROVIDER=india
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - HOST=0.0.0.0
+      - PORT=8000
+      - CORS_ORIGINS=http://localhost:3000
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@stockapp.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+    # No DB volume: the SQLite file is created fresh on first run and is lost
+    # when the container is replaced. See DEPLOYMENT.md for persistence.
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_TELEMETRY_DISABLED=1
+    depends_on:
+      - backend
