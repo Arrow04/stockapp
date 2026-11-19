@@ -1,0 +1,15 @@
+# Web framework
+fastapi
+uvicorn[standard]
+pydantic
+
+# Configuration & async DB drivers (for future PostgreSQL support)
+python-dotenv
+sqlalchemy[asyncio]
+asyncpg
+
+# Authentication & security
+bcrypt
+PyJWT
+pyotp
+qrcode[pil]
