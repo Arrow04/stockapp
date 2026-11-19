@@ -11,6 +11,8 @@ from fastapi.responses import JSONResponse
 from app.api.routes import auth as auth_routes
 from app.api.routes import health as health_routes
 from app.api.routes import market as market_routes
+from app.api.routes import portfolio as portfolio_routes
+from app.services.portfolio_service import portfolio_service_holder
 from app.config import settings
 from app.core.errors import DomainError
 from app.services.auth_service import auth_service
@@ -21,6 +23,7 @@ from app.services.market_data_service import market_data_service
 async def lifespan(app: FastAPI):
     # Initialise persistence and start the market feed.
     auth_service.initialize()
+    portfolio_service_holder.initialize(settings.admin_email)
     await market_data_service.start()
     try:
         yield
@@ -81,6 +84,7 @@ def create_app() -> FastAPI:
     app.include_router(health_routes.router)
     app.include_router(auth_routes.router)
     app.include_router(market_routes.router)
+    app.include_router(portfolio_routes.router)
     return app
 
 

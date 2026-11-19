@@ -1,6 +1,6 @@
 # StockApp — Enterprise SaaS Trading Dashboard
 
-A production-style, full-stack trading dashboard built with **Next.js**, **FastAPI**, and real **NSE/BSE Indian market data** (Yahoo Finance public API). Features JWT authentication with TOTP 2FA, per-user portfolios, real-time WebSocket streaming, candlestick charts, and a clean layered architecture.
+A production-style, full-stack trading dashboard built with **Next.js**, **FastAPI**, and real **NSE/BSE Indian market data** (Yahoo Finance public API). Uses **PostgreSQL** as the primary database. Features JWT authentication with TOTP 2FA, per-user portfolios, real-time WebSocket streaming, candlestick charts, and a clean layered architecture.
 
 Built by **Cyber Sentinel Technology** — [cybersentineltech.online](https://www.cybersentineltech.online/)
 
@@ -8,6 +8,7 @@ Built by **Cyber Sentinel Technology** — [cybersentineltech.online](https://ww
 
 ## ✨ Features
 
+- 🗄️ **PostgreSQL primary database** for accounts and portfolios (SQLite fallback for local dev)
 - 📈 **125 NSE + BSE companies** with real ₹ INR prices (no API key required)
 - ⚡ **Real-time streaming** over WebSocket, with REST fallback
 - 📊 **Candlestick charts** with 6 timeframes, volume, crosshair
@@ -53,6 +54,20 @@ stockapp/
 ### Prerequisites
 - Python 3.10+
 - Node.js 18+
+- PostgreSQL 13+ (for production; SQLite works for a zero-setup local demo)
+
+### Database (PostgreSQL)
+
+```bash
+# Create the database once
+psql -U postgres -c "CREATE DATABASE stockapp;"
+
+# Set in backend/.env (see .env.example)
+# DATABASE_URL=postgresql+psycopg2://postgres:PASSWORD@localhost:5432/stockapp
+```
+
+Migrating an existing SQLite install? Run `python backend/migrate_to_postgres.py`
+after setting the PostgreSQL `DATABASE_URL` — it copies all users.
 
 ### Backend
 

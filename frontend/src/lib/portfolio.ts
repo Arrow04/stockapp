@@ -1,51 +1,49 @@
 import type { Holding } from '@/models'
 export type { Holding } from '@/models'
 
-const KEY_PREFIX = 'stockapp_portfolio_in_'
-
-function keyFor(user: string) {
-  return KEY_PREFIX + user.toLowerCase()
-}
-
-const SEED: Record<string, Holding[]> = {
-  'admin@stockapp.com': [
-    { id: 'h1', symbol: 'RELIANCE (NSE)', qty: 10, avgPrice: 1320 },
-    { id: 'h2', symbol: 'TCS (NSE)', qty: 5, avgPrice: 2320 },
-    { id: 'h3', symbol: 'HDFCBANK (NSE)', qty: 20, avgPrice: 790 },
-    { id: 'h4', symbol: 'INFY (NSE)', qty: 15, avgPrice: 1150 },
-  ],
-}
-
+const API = 'http://localhost:8000/api/portfolio'
 export const PORTFOLIO_CHANGED = 'stockapp:portfolio-changed'
 
-export function getHoldings(user: string): Holding[] {
-  if (typeof window === 'undefined') return SEED[user.toLowerCase()] || []
-  const raw = localStorage.getItem(keyFor(user))
-  if (!raw) {
-    const seed = SEED[user.toLowerCase()] || []
-    localStorage.setItem(keyFor(user), JSON.stringify(seed))
-    return seed
-  }
-  try { return JSON.parse(raw) } catch { return [] }
+function token() {
+  return typeof window !== 'undefined' ? localStorage.getItem('stockapp_token') : null
 }
 
-function save(user: string, holdings: Holding[]) {
-  localStorage.setItem(keyFor(user), JSON.stringify(holdings))
+async function req(path: string = '', method: string = 'GET', body?: any) {
+  const res = await fetch(API + path, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token() || ''}`,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.detail || 'Portfolio request failed')
+  return data
+}
+
+/** Holdings are persisted server-side in PostgreSQL. */
+export async function getHoldings(): Promise<Holding[]> {
+  return req()
+}
+
+export async function addHolding(data: Omit<Holding, 'id'>): Promise<Holding[]> {
+  const next = await req('', 'POST', data)
   window.dispatchEvent(new Event(PORTFOLIO_CHANGED))
+  return next
 }
 
-export function addHolding(user: string, data: Omit<Holding, 'id'>): Holding {
-  const holdings = getHoldings(user)
-  const item = { ...data, id: 'h-' + Date.now() }
-  save(user, [item, ...holdings])
-  return item
+export async function updateHolding(id: string, data: Partial<Omit<Holding, 'id'>>): Promise<Holding[]> {
+  // Fetch current to merge symbol (backend update takes full body).
+  const all = await getHoldings()
+  const current = all.find(h => h.id === id)
+  const next = await req(`/${id}`, 'PUT', { symbol: current?.symbol || data.symbol || '', qty: data.qty ?? current?.qty ?? 0, avgPrice: data.avgPrice ?? current?.avgPrice ?? 0 })
+  window.dispatchEvent(new Event(PORTFOLIO_CHANGED))
+  return next
 }
 
-export function updateHolding(user: string, id: string, data: Partial<Omit<Holding, 'id'>>) {
-  const next = getHoldings(user).map(h => h.id === id ? { ...h, ...data } : h)
-  save(user, next)
-}
-
-export function deleteHolding(user: string, id: string) {
-  save(user, getHoldings(user).filter(h => h.id !== id))
+export async function deleteHolding(id: string): Promise<Holding[]> {
+  const next = await req(`/${id}`, 'DELETE')
+  window.dispatchEvent(new Event(PORTFOLIO_CHANGED))
+  return next
 }

@@ -3,10 +3,11 @@ fastapi
 uvicorn[standard]
 pydantic
 
-# Configuration & async DB drivers (for future PostgreSQL support)
+# Configuration & database drivers (SQLite local + PostgreSQL production)
 python-dotenv
 sqlalchemy[asyncio]
 asyncpg
+psycopg2-binary
 
 # Authentication & security
 bcrypt

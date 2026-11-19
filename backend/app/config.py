@@ -34,7 +34,13 @@ class Settings:
         )
 
         # ---- database / authentication ----
-        self.db_path = os.path.join(_BACKEND_DIR, "database.db")
+        # Primary database. Examples:
+        #   sqlite:///./database.db
+        #   postgresql+psycopg2://user:password@localhost:5432/stockapp
+        self.database_url = os.getenv(
+            "DATABASE_URL", f"sqlite:///{os.path.join(_BACKEND_DIR, 'database.db')}"
+        )
+        self.db_path = os.path.join(_BACKEND_DIR, "database.db")  # legacy fallback
         self.jwt_secret = os.getenv(
             "JWT_SECRET", "cyber-sentinel-change-this-secret-key-please-2026"
         )

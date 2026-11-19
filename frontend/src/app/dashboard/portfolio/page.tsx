@@ -20,7 +20,7 @@ export default function PortfolioPage() {
   const [modal, setModal] = useState<Modal>({ type: 'closed' })
   useEffect(() => { setUser(localStorage.getItem('user') || 'admin@stockapp.com') }, [])
 
-  const holdings = usePortfolio(user)
+  const { holdings } = usePortfolio(user)
   const currency = data?.currency
   const quotes = data?.quotes || []
 
@@ -57,7 +57,7 @@ export default function PortfolioPage() {
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Portfolio</h1>
-              <p className="text-slate-500 text-sm mt-1">Your personal holdings — saved to <b className="text-slate-700">{user}</b>.</p>
+              <p className="text-slate-500 text-sm mt-1">Your personal holdings — stored in PostgreSQL for <b className="text-slate-700">{user}</b>.</p>
             </div>
             <button onClick={() => setModal({ type: 'add' })} className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -136,10 +136,10 @@ export default function PortfolioPage() {
       {(modal.type === 'add' || modal.type === 'edit') && (
         <HoldingModal mode={modal.type} holding={modal.type === 'edit' ? modal.holding : undefined} symbols={availableSymbols}
           onClose={() => setModal({ type: 'closed' })}
-          onSave={d => { if (modal.type === 'edit') updateHolding(user, modal.holding.id, d); else addHolding(user, d); setModal({ type: 'closed' }) }} />
+          onSave={async d => { try { if (modal.type === 'edit') await updateHolding(modal.holding.id, d); else await addHolding(d); } catch {} setModal({ type: 'closed' }) }} />
       )}
       {modal.type === 'delete' && (
-        <DeleteModal holding={modal.holding} onClose={() => setModal({ type: 'closed' })} onConfirm={() => { deleteHolding(user, modal.holding.id); setModal({ type: 'closed' }) }} />
+        <DeleteModal holding={modal.holding} onClose={() => setModal({ type: 'closed' })} onConfirm={async () => { try { await deleteHolding(modal.holding.id) } catch {} setModal({ type: 'closed' }) }} />
       )}
     </div>
   )

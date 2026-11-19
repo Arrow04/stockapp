@@ -1,15 +1,30 @@
 version: "3.9"
 
-# Quick local / demo deployment.
-# Production: use PostgreSQL + a secrets manager, terminate TLS at a reverse
-# proxy (nginx/Caddy), and run containers as a non-root user. See DEPLOYMENT.md.
+# Quick local / demo deployment with PostgreSQL.
+# Production: use secrets manager, TLS reverse proxy, non-root containers. See DEPLOYMENT.md.
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: stockapp
+      POSTGRES_PASSWORD: stockapp
+      POSTGRES_DB: stockapp
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stockapp"]
+      interval: 5s
+      retries: 10
+
   backend:
     build: ./backend
     ports:
       - "8000:8000"
     environment:
+      - DATABASE_URL=postgresql+psycopg2://stockapp:stockapp@postgres:5432/stockapp
       - MARKET_DATA_PROVIDER=india
       - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
       - HOST=0.0.0.0
@@ -18,8 +33,9 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@stockapp.com}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
-    # No DB volume: the SQLite file is created fresh on first run and is lost
-    # when the container is replaced. See DEPLOYMENT.md for persistence.
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   frontend:
     build: ./frontend
@@ -29,3 +45,6 @@ services:
       - NEXT_TELEMETRY_DISABLED=1
     depends_on:
       - backend
+
+volumes:
+  postgres-data:

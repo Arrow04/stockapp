@@ -121,7 +121,7 @@ class AuthService:
 
 # Composition root for the auth aggregate (constructor injection).
 auth_service = AuthService(
-    users=UserRepository(settings.db_path),
+    users=UserRepository(settings.database_url),
     tokens=TokenService(
         settings.jwt_secret, settings.jwt_algorithm,
         settings.access_ttl, settings.refresh_ttl,

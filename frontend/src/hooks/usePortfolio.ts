@@ -5,18 +5,28 @@ import { Holding, getHoldings, PORTFOLIO_CHANGED } from '@/lib/portfolio'
 
 export function usePortfolio(user: string) {
   const [holdings, setHoldings] = useState<Holding[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!user) return
-    const refresh = () => setHoldings(getHoldings(user))
+    let active = true
+    const refresh = async () => {
+      try {
+        const data = await getHoldings()
+        if (active) setHoldings(data)
+      } catch {
+        if (active) setHoldings([])
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
     refresh()
     window.addEventListener(PORTFOLIO_CHANGED, refresh)
-    window.addEventListener('storage', refresh)
     return () => {
+      active = false
       window.removeEventListener(PORTFOLIO_CHANGED, refresh)
-      window.removeEventListener('storage', refresh)
     }
   }, [user])
 
-  return holdings
+  return { holdings, loading }
 }
